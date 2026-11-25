@@ -1,0 +1,21 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.26"
+optimizer = true
+optimizer_runs = 200
+remappings = [
+  "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+  "forge-std/=lib/forge-std/src/",
+  # Atlas Oracle pull consumer (its own imports use these bare prefixes)
+  "pull-oracle-consumer/=lib/pull-oracle-consumer/src/",
+  "types/=lib/pull-oracle-consumer/src/types/",
+  "constants/=lib/pull-oracle-consumer/src/constants/",
+  "libraries/=lib/pull-oracle-consumer/src/libraries/",
+  "interfaces/=lib/pull-oracle-consumer/src/interfaces/",
+  "base/=lib/pull-oracle-consumer/src/base/",
+]
+
+[rpc_endpoints]
+bsc_testnet = "https://bsc-testnet-rpc.publicnode.com"

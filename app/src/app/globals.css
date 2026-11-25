@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+/* Catfooding's dark palette: night navy, cool white text, one violet accent. Status colours only for status. */
+@theme inline {
+  --color-background: var(--ink);
+  --color-foreground: var(--cream);
+  --color-border: var(--border);
+  --color-muted-foreground: var(--muted);
+  --color-ink: var(--ink);
+  --color-ink-raised: var(--ink-raised);
+}
+
+:root {
+  --ink: #090a1a;
+  --ink-raised: #11122a;
+  --cream: #ecebf7;
+  --muted: #9a9bb3;
+  --border: #26284a;
+  --acid: #8d81ff;
+  --acid-dim: #6b5bff;
+  --good: #3ddc97;
+  --warn: #ffb84f;
+  --bad: #ff5d5d;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--ink);
+  color: var(--cream);
+}
+
+.chunky-border-acid {
+  border: 1px solid color-mix(in oklab, var(--acid) 55%, transparent);
+  box-shadow: 0 0 48px -28px color-mix(in oklab, var(--acid) 70%, transparent);
+}
+
+.room-skin {
+  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+  background:
+    radial-gradient(1100px 520px at 50% -12%, color-mix(in srgb, var(--acid-dim) 16%, transparent), transparent 70%),
+    var(--ink);
+}
+.room-skin .font-mono {
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+.room-skin .font-display {
+  font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+}
