@@ -97,11 +97,20 @@ export type RecordResult =
   | { ok: true; txHash: Hex; recorded: { symbol: string; verdict: string; premiumPct: number }[]; explorer: string }
   | { ok: false; skipped?: boolean; error: string };
 
+/** The attester key as pasted into a dashboard: tolerate quotes, spaces and a missing 0x. */
+function attesterKey(): Hex | undefined {
+  const raw = process.env.CAT_ATTESTER_KEY?.trim().replace(/^["']|["']$/g, "").trim();
+  if (!raw) return undefined;
+  const hex = raw.startsWith("0x") || raw.startsWith("0X") ? raw.slice(2) : raw;
+  return /^[0-9a-fA-F]{64}$/.test(hex) ? (`0x${hex}` as Hex) : undefined;
+}
+
 /** Take a fresh reading and record every stock that has a real share price, in one transaction. */
 export async function recordVerdicts({ force = false } = {}): Promise<RecordResult> {
   const c = verdictsContract();
-  const key = process.env.CAT_ATTESTER_KEY as Hex | undefined;
-  if (!c || !key) return { ok: false, error: "Recording isn't set up (contract address or attester key missing)." };
+  const key = attesterKey();
+  if (!c) return { ok: false, error: "Recording isn't set up (contract address missing)." };
+  if (!key) return { ok: false, error: "Recording isn't set up (attester key missing, or not 64 hex characters)." };
 
   if (!force) {
     const recorded = await readRecorded().catch(() => []);
