@@ -1,7 +1,7 @@
 # Is it fair food? A cat that checks tokenized stocks on BNB Chain
 
 **Team:** Catfooding (JC, Jessica) · **Tracks:** Developer Track · CoinMarketCap × Atlas Challenge
-**Live:** https://preview.catfooding.com/bnb · **Code:** https://github.com/catfoodingcom/catgent-bnb · **Contract (BSC testnet):** [`0x0768597770EDF130B59a9661495d1cbAF8904bB4`](https://testnet.bscscan.com/address/0x0768597770EDF130B59a9661495d1cbAF8904bB4)
+**Live:** https://preview.catfooding.com/bnb · **Code:** https://github.com/catfoodingcom/catgent-hub · **Contract (BSC testnet):** [`0x0768597770EDF130B59a9661495d1cbAF8904bB4`](https://testnet.bscscan.com/address/0x0768597770EDF130B59a9661495d1cbAF8904bB4)
 
 ## The problem, and who it's for
 
