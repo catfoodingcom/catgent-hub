@@ -9,8 +9,8 @@ import { storeScreenDay } from "./screen";
 // signed price, which the contract verifies itself. The attester key is a testnet-only key kept on the engine.
 
 const RPC = process.env.BSC_TESTNET_RPC_URL ?? "https://bsc-testnet-rpc.publicnode.com";
-/** Don't record again within this long (each record costs testnet gas, and verdicts don't move that fast). */
-export const MIN_RECORD_INTERVAL_S = 10 * 60;
+/** Under the timer's 10 minutes, so its own jitter (a run landing at 9m52s) never skips a batch; still stops double sends. */
+export const MIN_RECORD_INTERVAL_S = 8 * 60;
 
 export const VERDICT_CODE = { REFUSE: 0, WAIT: 1, WATCH: 2 } as const;
 const CODE_VERDICT = ["REFUSE", "WAIT", "WATCH"] as const;
@@ -115,7 +115,7 @@ export async function recordVerdicts({ force = false } = {}): Promise<RecordResu
   if (!force) {
     const recorded = await readRecorded().catch(() => []);
     const last = Math.max(0, ...recorded.map((r) => r.recordedAt));
-    if (Date.now() / 1000 - last < MIN_RECORD_INTERVAL_S) return { ok: false, skipped: true, error: "Recorded less than 10 minutes ago." };
+    if (Date.now() / 1000 - last < MIN_RECORD_INTERVAL_S) return { ok: false, skipped: true, error: "Recorded less than 8 minutes ago." };
   }
 
   const snap = await takeSnapshot();
