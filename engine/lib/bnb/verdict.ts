@@ -48,7 +48,33 @@ export interface StockVerdict {
   /** Widest gap between the three token prices (Atlas, CMC, DEX), in percent. */
   sourceSpreadPct: number | null;
   checks: Check[];
+  /** While the real share is closed: what the cat can still say (null while it's trading). Information only; it never changes the verdict. */
+  offHours: OffHours | null;
 }
+
+export type OpenRisk = "low" | "elevated" | "high";
+
+export interface OffHours {
+  state: string | null;
+  /** "closed for a holiday" */
+  label: string;
+  /** The last price the real share traded at. */
+  lastRealPrice: number | null;
+  /** How far the token has moved from that price since the share closed, in percent. */
+  driftPct: number | null;
+  exitLiquidityUsd: number | null;
+  hoursToNextOpen: number | null;
+  /** How much the token could snap back when the share reopens: drift, liquidity and how long it's been unanchored. */
+  openRisk: OpenRisk | null;
+  /** Why openRisk is what it is, one reason per item. */
+  riskWhy: string[];
+  summary: string;
+}
+
+/** Drift above this (half the fair-price line) and the open is worth watching. */
+const DRIFT_WATCH_PCT = MAX_PREMIUM_PCT / 2;
+/** A closure longer than this (a weekend, a long holiday) leaves the token unanchored long enough to wander. */
+const LONG_CLOSE_H = 24;
 
 const pct = (v: number) => `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`;
 const usd = (v: number) => (v >= 1e6 ? `$${(v / 1e6).toFixed(2)}M` : `$${Math.round(v / 1000)}k`);
@@ -65,7 +91,44 @@ const STATE_LABEL: Record<string, string> = {
   us_closed: "closed",
   us_weekend: "closed for the weekend",
   us_holiday: "closed for a holiday",
+  holiday: "closed for a holiday",
+  weekend: "closed for the weekend",
 };
+
+function offHoursView(stock: BnbStock, r: Readings, driftPct: number | null): OffHours {
+  const label = STATE_LABEL[r.marketState ?? ""] ?? "not trading";
+  const liq = r.dexLiquidityUsd;
+  const why: string[] = [];
+  let risk: OpenRisk | null = null;
+  if (driftPct != null && liq != null) {
+    const d = Math.abs(driftPct);
+    if (d > MAX_PREMIUM_PCT) why.push(`drifted ${pct(driftPct)}, past the ±${MAX_PREMIUM_PCT}% fair line`);
+    else if (d > DRIFT_WATCH_PCT) why.push(`drifted ${pct(driftPct)}`);
+    if (liq < MIN_EXIT_LIQUIDITY_USD) why.push(`only ${usd(liq)} in the pools`);
+    else if (liq < MIN_EXIT_LIQUIDITY_USD * 4) why.push(`thin pools (${usd(liq)})`);
+    if (r.hoursToNextOpen != null && r.hoursToNextOpen > LONG_CLOSE_H) why.push(`${Math.round(r.hoursToNextOpen)}h until the share trades again`);
+    risk = d > MAX_PREMIUM_PCT || liq < MIN_EXIT_LIQUIDITY_USD ? "high" : why.length ? "elevated" : "low";
+  }
+  const parts: string[] = [];
+  if (driftPct != null && r.realPrice != null) {
+    parts.push(`${pct(driftPct)} ${driftPct >= 0 ? "over" : "under"} the last real price ($${r.realPrice.toFixed(2)}).`);
+    if (Math.abs(driftPct) >= 0.05)
+      parts.push(`If ${stock.name} opens unchanged, the token ${driftPct >= 0 ? "gives back" : "gains back"} about ${Math.abs(driftPct).toFixed(2)}%.`);
+  } else parts.push("No last real price to measure against.");
+  if (liq != null) parts.push(`${usd(liq)} in BNB Chain pools to get out.`);
+  if (r.hoursToNextOpen != null) parts.push(`The real share trades again in ${r.hoursToNextOpen.toFixed(1)}h.`);
+  return {
+    state: r.marketState,
+    label,
+    lastRealPrice: r.realPrice,
+    driftPct,
+    exitLiquidityUsd: liq,
+    hoursToNextOpen: r.hoursToNextOpen,
+    openRisk: risk,
+    riskWhy: why,
+    summary: parts.join(" "),
+  };
+}
 
 export function bnbVerdict(stock: BnbStock, r: Readings): StockVerdict {
   const atlasAge = r.atlasOnchainTs == null ? null : r.nowS - r.atlasOnchainTs;
@@ -124,17 +187,18 @@ export function bnbVerdict(stock: BnbStock, r: Readings): StockVerdict {
     },
   ];
 
-  const out = (verdict: BnbVerdict, reason: string): StockVerdict => ({ verdict, reason, premiumPct, sourceSpreadPct, checks });
+  const offHours = r.marketOpen ? null : offHoursView(stock, r, premiumPct);
+  const out = (verdict: BnbVerdict, reason: string): StockVerdict => ({ verdict, reason, premiumPct, sourceSpreadPct, checks, offHours });
 
   if (!fresh) return out("REFUSE", "A reading is old or missing. Not eating old food.");
   if (agree === false) return out("REFUSE", `The price sources disagree by ${sourceSpreadPct!.toFixed(2)}%. Nobody can say what it's worth.`);
   if (healthy === false) return out("REFUSE", `The oracle's own consensus is ${r.atlasConsensus!.toLowerCase()}. No bite.`);
   if (liquid === false) return out("REFUSE", `Only ${usd(r.dexLiquidityUsd!)} in the pools. Too thin to get out.`);
-  if (fair === false) return out("REFUSE", `Priced ${pct(premiumPct!)} away from the real share. Not fair food.`);
+  if (fair === false) return out("REFUSE", `Priced ${pct(premiumPct!)} away from ${r.marketOpen ? "the real share" : "the last real price"}. Not fair food.`);
   if (agree == null || liquid == null || fair == null) return out("REFUSE", "A check is missing a reading. No proof, no bite.");
   if (!r.marketOpen) {
     const next = r.hoursToNextOpen != null ? ` Next live reference in ${r.hoursToNextOpen.toFixed(1)}h.` : "";
-    return out("WAIT", `Trades 24/7, but the real share is ${STATE_LABEL[r.marketState ?? ""] ?? "not trading"}, so a fair price can't be proven yet.${next}`);
+    return out("WAIT", `Trades 24/7, but the real share is ${offHours!.label}, so a fair price can't be proven yet. Now ${pct(premiumPct!)} from the last real price.${next}`);
   }
   return out("WATCH", `Real, fairly priced (${pct(premiumPct!)}), sources agree, enough liquidity to get out. Fair food.`);
 }
