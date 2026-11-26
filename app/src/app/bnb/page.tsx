@@ -15,6 +15,8 @@ interface Stock {
     dexLiquidityUsd: number | null; cmcVolume24h: number | null; atlasConsensus: string | null;
   };
   links: { atlasFeed: string; cmc: string; token: string };
+  /** While the real share is closed: drift from the last real price and the open risk (a reading, never a verdict). */
+  offHours?: { driftPct: number | null; lastRealPrice: number | null; openRisk: "low" | "elevated" | "high" | null; hoursToNextOpen: number | null } | null;
 }
 interface Data {
   ok: boolean; observedAt: string;
@@ -119,17 +121,27 @@ const MARKET_STATE: Record<string, string> = {
   us_closed: "closed",
   us_weekend: "closed for the weekend",
   us_holiday: "closed for a holiday",
+  holiday: "closed for a holiday",
+  weekend: "closed for the weekend",
 };
 const mark = (ok: boolean | null) => (ok == null ? "·" : ok ? "✓" : "✕");
 const markColor = (ok: boolean | null) => (ok == null ? "text-muted-foreground" : ok ? "text-[var(--good)]" : "text-[#ff9d9d]");
 const price = (v: number | null) => (v == null ? "—" : `$${v.toFixed(2)}`);
 const pct = (v: number | null) => (v == null ? "—" : `${v >= 0 ? "+" : ""}${v.toFixed(2)}%`);
 
-function catPose(stocks: Stock[]): { pose: string; line: string } {
+function catPose(stocks: Stock[], session?: Data["session"]): { pose: string; line: string } {
   const n = (v: Verdict) => stocks.filter((s) => s.verdict === v).length;
+  const refused = n("REFUSE");
+  const waiting = n("WAIT");
+  const closed = MARKET_STATE[session?.state ?? ""] ?? "closed";
   if (n("WATCH")) return { pose: "watch", line: `${n("WATCH")} of ${stocks.length} pass every check. Fair food.` };
-  if (n("WAIT")) return { pose: "waiting", line: "Nothing provably fair while the real shares aren't trading. Waiting." };
-  if (stocks.length) return { pose: "refuse", line: "Not eating any of it right now." };
+  if (refused && waiting)
+    return {
+      pose: refused >= waiting ? "refuse" : "waiting",
+      line: `Refusing ${refused} of ${stocks.length}. The other ${waiting} pass every check but one: the real shares are ${closed}, so there's no live price to prove them fair yet.`,
+    };
+  if (waiting) return { pose: "waiting", line: `All ${waiting} pass every check but one: the real shares are ${closed}, so there's no live price to prove them fair yet.` };
+  if (stocks.length) return { pose: "refuse", line: `Refusing all ${stocks.length} right now.` };
   return { pose: "sleep", line: "No readings yet." };
 }
 
@@ -176,6 +188,12 @@ function StockCard({ s }: { s: Stock }) {
       <div className="mt-1 font-mono text-[11px] text-muted-foreground">
         gap to real {pct(s.premiumPct)} · sources within {s.sourceSpreadPct == null ? "—" : `${s.sourceSpreadPct.toFixed(2)}%`}
       </div>
+      {s.offHours && s.offHours.driftPct != null && (
+        <div className="mt-1 font-mono text-[11px] text-[var(--warn)]">
+          market closed: {pct(s.offHours.driftPct)} since the last real price {price(s.offHours.lastRealPrice)}
+          {s.offHours.openRisk ? ` · open risk ${s.offHours.openRisk}` : ""}
+        </div>
+      )}
       <ul className="mt-3 space-y-1 font-mono text-[11px]">
         {s.checks.map((c) => (
           <li key={c.label} className="flex gap-2">
@@ -220,7 +238,7 @@ export default function BnbPage() {
   }, []);
 
   const stocks = data?.stocks ?? [];
-  const cat = catPose(stocks);
+  const cat = catPose(stocks, data?.session);
   const src = data?.sources;
   const session = data?.session;
 
