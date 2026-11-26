@@ -1,0 +1,6 @@
+[Unit]
+Description=CoAgentic Markets: attest BNB Chain verdicts on BSC testnet
+
+[Service]
+Type=oneshot
+ExecStart=/opt/coagentic-markets/scripts/bnb-record.sh

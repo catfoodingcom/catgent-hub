@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-// /bnb: the cat judges tokenized stocks on BNB Chain. Public, read-only, refreshed every 30 s.
+// /bnb: the cat on BNB Chain's tokenized stocks. Catfooding is the client: the readings, verdicts and on-chain
+// attestations come from CoAgentic Markets (tv.coagentic.markets/api/public/bnb). Public, read-only, every 30 s.
 
 type Verdict = "REFUSE" | "WAIT" | "WATCH";
 interface Check { label: string; ok: boolean | null; detail: string; source: string }
@@ -56,7 +57,7 @@ function OnChain({ contract }: { contract: Contract | null }) {
     <div className="chunky-border-acid bg-ink-raised rounded-2xl p-4">
       <h2 className="font-display text-lg font-bold">Recorded on-chain</h2>
       <p className="mt-1 text-sm">
-        Every few minutes the cat writes its verdicts to a contract on BNB Chain testnet, each next to Atlas&apos;s signed price for the token.
+        Every 10 minutes CoAgentic Markets writes its verdicts to a contract on BNB Chain testnet, each next to Atlas&apos;s signed price for the token.
         The contract checks Atlas&apos;s signature and the price&apos;s age itself, works out the gap to the real share, and refuses a
         &ldquo;fair&rdquo; verdict that the verified price contradicts.
       </p>
@@ -111,6 +112,13 @@ const STYLE: Record<Verdict, { icon: string; chip: string; pose: string }> = {
   REFUSE: { icon: "🙅", chip: "border-[var(--bad)]/60 bg-[var(--bad)]/10 text-[#ff9d9d]", pose: "refuse" },
   WAIT: { icon: "⏳", chip: "border-[var(--warn)]/60 bg-[var(--warn)]/10 text-[var(--warn)]", pose: "waiting" },
   WATCH: { icon: "👀", chip: "border-[var(--good)]/60 bg-[var(--good)]/10 text-[var(--good)]", pose: "watch" },
+};
+const MARKET_STATE: Record<string, string> = {
+  off_hours: "closed for the night",
+  us_extended: "in extended hours",
+  us_closed: "closed",
+  us_weekend: "closed for the weekend",
+  us_holiday: "closed for a holiday",
 };
 const mark = (ok: boolean | null) => (ok == null ? "·" : ok ? "✓" : "✕");
 const markColor = (ok: boolean | null) => (ok == null ? "text-muted-foreground" : ok ? "text-[var(--good)]" : "text-[#ff9d9d]");
@@ -230,12 +238,12 @@ export default function BnbPage() {
           <div className="min-w-0">
             <h1 className="font-display text-2xl font-bold">Is it fair food?</h1>
             <p className="mt-1 text-sm">
-              The cat checks tokenized US stocks on BNB Chain against the real share. Three independent prices must agree,
+              The cat reads CoAgentic Markets&apos; checks on tokenized US stocks on BNB Chain. Three independent prices must agree,
               the pools must be deep enough to get out, and the price must sit within 1% of the real share while that share is trading.
             </p>
             <p className="mt-2 font-display text-lg">{cat.line}</p>
             <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-              {session ? (session.anchored ? "US market open: the real share is a live reference." : `US market ${session.state?.replace("us_", "") ?? "?"} (${session.etTime ?? ""} ET)`) : "…"}
+              {session ? (session.anchored ? "US market open: the real share is a live reference." : `US market ${MARKET_STATE[session.state ?? ""] ?? "closed"} (${session.etTime ?? ""} ET)`) : "…"}
               {data ? ` · read ${new Date(data.observedAt).toLocaleTimeString()}` : ""}
             </p>
           </div>
@@ -262,7 +270,7 @@ export default function BnbPage() {
             <Source
               ok={src.reference.ok}
               label="Real share + market hours"
-              detail={src.reference.ok ? "CoAgentic Markets public feed" : src.reference.error ?? "no reading"}
+              detail={src.reference.ok ? "CoAgentic Markets" : src.reference.error ?? "no reading"}
               href="https://coagentic.markets"
             />
           </div>
@@ -279,7 +287,7 @@ export default function BnbPage() {
         <OnChain contract={data?.verdictsContract ?? null} />
 
         <p className="font-mono text-[10px] text-muted-foreground">
-          Readings, not advice. The cat places no trades here. Prices: Atlas Oracle feed contract on BNB Smart Chain, CoinMarketCap Pro API, CoAgentic Markets.
+          Readings, not advice. The cat places no trades here. Engine: CoAgentic Markets, reading the Atlas Oracle feed on BNB Smart Chain, Atlas&apos;s signed prices and the CoinMarketCap Pro API.
         </p>
       </div>
     </div>

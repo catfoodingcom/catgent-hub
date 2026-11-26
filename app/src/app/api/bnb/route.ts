@@ -1,18 +1,27 @@
 import { NextResponse } from "next/server";
-import { takeSnapshot } from "@/lib/bnb/snapshot";
-import { verdictsContract } from "@/lib/bnb/record";
 
-// GET /api/bnb: the cat's verdicts on tokenized stocks on BNB Chain, with every reading behind them.
-// Public and read-only: no sign-in, no keys in the response, nothing here can move funds.
-// Shared at the CDN for 30 s, so a busy page doesn't spend the CoinMarketCap budget.
+// GET /api/bnb: the BNB Chain lane as the cat sees it. Catfooding is a client here: CoAgentic Markets reads Atlas
+// Oracle and CoinMarketCap, checks the tokenized stocks against the real share, gives the verdicts and attests them
+// on BNB Chain (tv.coagentic.markets/api/public/bnb). This route reads that public feed server-side (it sends no
+// CORS header) and passes it on, with the attestation contract where the page expects it.
+
+const FEED_BASE = process.env.COAGENTIC_FEED_BASE ?? "https://tv.coagentic.markets";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { signed, ...snapshot } = await takeSnapshot();
-  return NextResponse.json(
-    { ...snapshot, verdictsContract: verdictsContract() },
-    { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" } }
-  );
+  try {
+    const res = await fetch(`${FEED_BASE}/api/public/bnb`, { signal: AbortSignal.timeout(20_000), cache: "no-store" });
+    if (!res.ok) throw new Error(String(res.status));
+    const feed = await res.json();
+    return NextResponse.json(
+      { ...feed, verdictsContract: feed.attestation?.contract ?? null },
+      { headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60" } }
+    );
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: "CoAgentic Markets didn't answer. Try again in a minute.", stocks: [], verdictsContract: null },
+      { status: 503, headers: { "Cache-Control": "public, s-maxage=15" } }
+    );
+  }
 }

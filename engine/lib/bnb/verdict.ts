@@ -61,6 +61,7 @@ function spreadPct(prices: (number | null)[]): number | null {
 
 const STATE_LABEL: Record<string, string> = {
   us_extended: "in extended hours",
+  off_hours: "closed for the night",
   us_closed: "closed",
   us_weekend: "closed for the weekend",
   us_holiday: "closed for a holiday",

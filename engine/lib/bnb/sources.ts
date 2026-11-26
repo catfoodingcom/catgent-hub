@@ -1,12 +1,14 @@
+import { promises as fs } from "fs";
+import path from "path";
 import { createPublicClient, http } from "viem";
 import { bsc } from "viem/chains";
 import { ATLAS_MULTIFEED_BSC, BNB_STOCKS, feedKey } from "./stocks";
 
-// Server-side reads for the BNB Chain lane. Keys stay here (never sent to the browser).
+// CoAgentic Markets: the BNB Chain lane's raw readings (Atlas Oracle, CoinMarketCap) and the real share.
+// Server-side only; the API keys stay on the engine.
 // Each reader returns what it got plus where from, so the page can show its working.
 
 const TIMEOUT_MS = 8000;
-const FEED_BASE = process.env.COAGENTIC_FEED_BASE ?? "https://tv.coagentic.markets";
 const BSC_RPC = process.env.BSC_RPC_URL ?? "https://bsc-rpc.publicnode.com";
 /** CMC's free plan has 15,000 credits a month: its reads are kept for 5 minutes. */
 const CMC_REVALIDATE_S = 300;
@@ -221,7 +223,7 @@ export async function readCmc(): Promise<CmcRead> {
   return { ok, configured: true, quotes, dex, error: errors.length ? errors.join("; ").slice(0, 300) : undefined };
 }
 
-// ---------- The real share price and US market hours (CoAgentic Markets public feed) ----------
+// ---------- The real share price and US market hours (Markets' own warden snapshot) ----------
 
 export interface Reference {
   ok: boolean;
@@ -231,16 +233,14 @@ export interface Reference {
   error?: string;
 }
 
+/** The same reading lab-venue serves: data/wrd-state-xlayer.json, written by the warden on its timer. */
 export async function readReference(): Promise<Reference> {
   try {
-    const res = await fetch(`${FEED_BASE}/api/public/lab-venue`, { signal: AbortSignal.timeout(TIMEOUT_MS), cache: "no-store" });
-    if (!res.ok) throw new Error(String(res.status));
-    const raw = await res.json();
-    if (!raw?.ok) throw new Error("not ready");
+    const raw = JSON.parse(await fs.readFile(path.join(process.cwd(), "data/wrd-state-xlayer.json"), "utf8"));
     const prices: Record<string, number> = {};
-    for (const r of Array.isArray(raw.rows) ? raw.rows : []) {
-      const p = num(r?.realPrice);
-      if (typeof r?.name === "string" && p != null) prices[r.name] = p;
+    for (const l of Array.isArray(raw.legs) ? raw.legs : []) {
+      const p = num(l?.realPrice);
+      if (typeof l?.underlying === "string" && p != null) prices[l.underlying] = p;
     }
     return {
       ok: true,

@@ -4,8 +4,8 @@ import { bscTestnet } from "viem/chains";
 import { BNB_STOCKS, MAX_PREMIUM_PCT, feedKey } from "./stocks";
 import { takeSnapshot } from "./snapshot";
 
-// Records the cat's verdicts on BNB Smart Chain testnet (CatVerdicts), each next to Atlas's signed price,
-// which the contract verifies itself. The attester key is a testnet-only key kept server-side.
+// CoAgentic Markets attests its BNB Chain verdicts on BNB Smart Chain testnet (CatVerdicts), each next to Atlas's
+// signed price, which the contract verifies itself. The attester key is a testnet-only key kept on the engine.
 
 const RPC = process.env.BSC_TESTNET_RPC_URL ?? "https://bsc-testnet-rpc.publicnode.com";
 /** Don't record again within this long (each record costs testnet gas, and verdicts don't move that fast). */
@@ -46,8 +46,7 @@ export const catVerdictsAbi = [
 ] as const;
 
 export function verdictsContract() {
-  const address = process.env.NEXT_PUBLIC_CAT_VERDICTS_ADDRESS as Hex | undefined;
-  if (!address) return null;
+  const address = (process.env.CAT_VERDICTS_ADDRESS || "0x0768597770EDF130B59a9661495d1cbAF8904bB4") as Hex;
   return { address, chainId: bscTestnet.id, chain: "BNB Smart Chain testnet", explorer: `https://testnet.bscscan.com/address/${address}` };
 }
 

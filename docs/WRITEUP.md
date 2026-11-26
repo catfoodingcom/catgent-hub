@@ -1,7 +1,7 @@
-# Is it fair food? A cat that checks tokenized stocks on BNB Chain
+# Is it fair food? Checked tokenized stocks on BNB Chain
 
-**Team:** Catfooding (JC, Jessica) · **Tracks:** Developer Track · CoinMarketCap × Atlas Challenge
-**Live:** https://preview.catfooding.com/bnb · **Code:** https://github.com/catfoodingcom/catgent-hub · **Contract (BSC testnet):** [`0x0768597770EDF130B59a9661495d1cbAF8904bB4`](https://testnet.bscscan.com/address/0x0768597770EDF130B59a9661495d1cbAF8904bB4)
+**Team:** CoAgentic Markets (the engine) and Catfooding (the client): JC, Jessica · **Tracks:** Developer Track · CoinMarketCap × Atlas Challenge
+**Live:** https://preview.catfooding.com/bnb (the cat) · https://tv.coagentic.markets/api/public/bnb (the engine's feed) · **Code:** https://github.com/catfoodingcom/catgent-hub · **Contract (BSC testnet):** [`0x0768597770EDF130B59a9661495d1cbAF8904bB4`](https://testnet.bscscan.com/address/0x0768597770EDF130B59a9661495d1cbAF8904bB4)
 
 ## The problem, and who it's for
 
@@ -11,7 +11,7 @@ It's for people buying tokenized stocks on BNB Chain, and for the agents buying 
 
 ## What we built
 
-A cat that judges each tokenized stock and shows its working:
+**CoAgentic Markets**, an agent engine, turns raw oracle and market data into checked verdicts and attests them on BNB Chain. **Catfooding's cat** is a client that reads the engine's public feed and shows the verdicts. Any other agent or app can read the same feed. Each stock gets a verdict, with the engine's working shown:
 - **REFUSE:** not fair food.
 - **WAIT:** can't be proven fair yet.
 - **WATCH:** fair; every check passes.
@@ -27,10 +27,10 @@ Six checks per stock, each tied to a source:
 | Price is fair | within ±1% of the real share | Atlas vs real share |
 | Fair price provable | the real share is trading now | US market hours |
 
-**On-chain proof.** Every few minutes, the cat records its verdicts on BNB Chain testnet in a `CatVerdicts` contract:
+**On-chain proof.** Every 10 minutes, the engine records its verdicts on BNB Chain testnet in a `CatVerdicts` contract:
 - Each verdict carries **Atlas's signed price**. The contract verifies it itself: the signature must come from Atlas's official signer, and the price must be fresh.
 - The contract works out the gap to the real share on-chain.
-- It **rejects a "fair" verdict that the verified price contradicts.** The cat can't claim more than the oracle supports.
+- It **rejects a "fair" verdict that the verified price contradicts.** The engine can't claim more than the oracle supports.
 
 ## Endpoints and feeds used, and why
 
