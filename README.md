@@ -9,6 +9,7 @@ Tokenized US stocks trade 24/7 on BNB Chain. **CoAgentic Markets** checks each o
 It answers **REFUSE**, **WAIT** or **WATCH**, publishes every reading behind the answer, and **attests its verdicts on BNB Chain** next to an oracle price that the contract verifies itself. **Catfooding's cat** is one client of that feed: it shows the verdicts as a picky cat that only eats checked food. Any other agent or app can read the same feed.
 
 **Live**
+- Engine page (CoAgentic Markets): https://coagentic.markets/research/bnb
 - Cat client: https://preview.catfooding.com/bnb
 - Engine feed (JSON, public): https://tv.coagentic.markets/api/public/bnb
 - Contract (BNB Smart Chain testnet): [`CatVerdicts` 0x0768597770EDF130B59a9661495d1cbAF8904bB4](https://testnet.bscscan.com/address/0x0768597770EDF130B59a9661495d1cbAF8904bB4). The engine records a batch every 10 minutes.

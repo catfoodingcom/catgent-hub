@@ -1,7 +1,7 @@
 # Is it fair food? Checked tokenized stocks on BNB Chain
 
 **Team:** CoAgentic Markets (the engine) and Catfooding (the client): JC, Jessica · **Tracks:** Developer Track · CoinMarketCap × Atlas Challenge
-**Live:** https://preview.catfooding.com/bnb (the cat) · https://tv.coagentic.markets/api/public/bnb (the engine's feed) · **Code:** https://github.com/catfoodingcom/catgent-hub · **Contract (BSC testnet):** [`0x0768597770EDF130B59a9661495d1cbAF8904bB4`](https://testnet.bscscan.com/address/0x0768597770EDF130B59a9661495d1cbAF8904bB4)
+**Live:** https://coagentic.markets/research/bnb (the engine's page) · https://preview.catfooding.com/bnb (the cat) · https://tv.coagentic.markets/api/public/bnb (the engine's feed) · **Code:** https://github.com/catfoodingcom/catgent-hub · **Contract (BSC testnet):** [`0x0768597770EDF130B59a9661495d1cbAF8904bB4`](https://testnet.bscscan.com/address/0x0768597770EDF130B59a9661495d1cbAF8904bB4)
 
 ## The problem, and who it's for
 
