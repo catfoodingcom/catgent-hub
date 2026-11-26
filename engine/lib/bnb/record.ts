@@ -3,6 +3,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { bscTestnet } from "viem/chains";
 import { BNB_STOCKS, MAX_PREMIUM_PCT, feedKey } from "./stocks";
 import { takeSnapshot } from "./snapshot";
+import { storeScreenDay } from "./screen";
 
 // CoAgentic Markets attests its BNB Chain verdicts on BNB Smart Chain testnet (CatVerdicts), each next to Atlas's
 // signed price, which the contract verifies itself. The attester key is a testnet-only key kept on the engine.
@@ -118,6 +119,10 @@ export async function recordVerdicts({ force = false } = {}): Promise<RecordResu
   }
 
   const snap = await takeSnapshot();
+  // The index screen's daily history rides on the same 10-minute reading (no extra API calls).
+  await storeScreenDay(
+    snap.stocks.map((s) => ({ symbol: s.symbol, liquidityUsd: s.readings.dexLiquidityUsd, volume24hUsd: s.readings.dexVolume24hUsd })),
+  ).catch(() => undefined);
   const sg = snap.signed;
   if (!sg.ok || !sg.payload || !sg.signature || !sg.magicMarker) return { ok: false, error: `No signed Atlas price: ${sg.error ?? "not configured"}` };
 

@@ -56,6 +56,16 @@ The API keys stay server-side. Each CMC and Atlas call is made with the team's k
 | Atlas MultiFeed (read) | BNB Smart Chain `0xeace…44aa` |
 | CatVerdicts (write) | BNB Smart Chain testnet `0x0768597770EDF130B59a9661495d1cbAF8904bB4` (first batch: tx `0xe386…de37`) |
 
+**Intelligence beyond the price check.** A fair price on its own isn't enough to hold a stock, so the engine answers three questions for each bStock:
+
+| Question | Who answers | How |
+|---|---|---|
+| What to hold? | **The Council** | It is the same council that runs the CoAgentic Steward book, which holds these six shares as xStocks on X Layer. Every day a bull, a bear and a risk agent argue over the plan, the trend phases and the macro calendar, and a synthesis weighs their cases. That's a view of the share, so it carries over to the bStock. The page shows the stance, the debate, and for each stock its weight, plan and trend phase. The Council has made no decision about BNB Chain; the engine only reads it. |
+| Is this token good enough to hold it through? | **The index screen** | It is the book's own rule: at least $100k in the pools and at least $10k of 24h volume on BNB Chain itself, for 3 days running. CMC's quote volume also counts Binance, so the engine reads BNB Chain DEX volume on its own. NVDAB, for example, trades $3.5M a day on-chain, against $150M+ across every venue. |
+| Is now a fair moment? | **The verdict** | The six checks above, attested on-chain. It's rule-based, so the contract can re-check it. |
+
+The engine's page shows all three: https://coagentic.markets/research/bnb
+
 ## What we'd build next
 
 - **All 97 bStocks**, plus Ondo's tokenized stocks on BNB Chain, side by side, so the same stock can be compared across issuers.

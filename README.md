@@ -50,6 +50,25 @@ The tokens are bStocks on BNB Smart Chain: NVDAB, TSLAB, SPCXB, MSTRB, CRCLB and
 - **WAIT** if all of that passes but the real share isn't trading, so a fair price can't be proven.
 - **WATCH** if every check passes.
 
+### Beyond the verdict: would an index hold it, and what does the Council think?
+
+The verdict answers one question: is now a fair moment? The engine answers two more for each bStock:
+
+- **Would the index take it?** (`engine/lib/bnb/screen.ts`) This is the same screen that picks the CoAgentic Steward book:
+  - the pools hold at least $100k;
+  - at least $10k a day trades on BNB Chain itself;
+  - both hold for 3 days running.
+
+  CMC's quote volume also counts exchanges such as Binance, so the engine reads BNB Chain DEX volume on its own. The 10-minute timer keeps a daily history, from which the feed works out the streak.
+- **What does the Council think of the share?** (`engine/lib/bnb/council.ts`) The Steward book holds the same six shares as xStocks on X Layer. Its Council (a bull, a bear and a risk agent, plus a synthesis) argues over them every day. That's a view of the share, so it carries over to the bStock. For each one, the feed carries:
+  - the Council's stance and its debate;
+  - the book's weight and plan for that share;
+  - the share's trend phase.
+
+  The Council has made no decision about BNB Chain; the engine only reads it.
+
+So the engine covers three things: **what to hold** (the Council), **is this token good enough to hold it through** (the index screen), and **is now fair** (the verdict, attested).
+
 ### On-chain: `CatVerdicts`
 
 `contracts/src/CatVerdicts.sol` builds on [Atlas's pull-oracle consumer](https://github.com/oracle-atlas/pull-oracle-consumer):

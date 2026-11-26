@@ -161,6 +161,11 @@ export interface CmcDex {
   liquidityUsd: number | null;
   high24h: number | null;
   low24h: number | null;
+  /** 24h traded on BNB Chain DEX pools only (CMC DEX stats); the quote's volume also counts exchanges such as Binance. */
+  volume24hUsd: number | null;
+  txs24h: number | null;
+  /** Centralised exchanges that also list the token (CMC DEX). */
+  cexListed: string[];
 }
 
 export interface CmcRead {
@@ -212,7 +217,16 @@ export async function readCmc(): Promise<CmcRead> {
       try {
         const body = await cmc(`/v1/dex/token?address=${s.token}&platform=bsc`, key);
         const d = body.data ?? {};
-        dex[s.token] = { price: num(d.p), liquidityUsd: num(d.liqUsd), high24h: num(d.ph24h), low24h: num(d.pl24h) };
+        const day = Array.isArray(d.sts) ? d.sts.find((x: { tp?: string }) => x?.tp === "24h") : null;
+        dex[s.token] = {
+          price: num(d.p),
+          liquidityUsd: num(d.liqUsd),
+          high24h: num(d.ph24h),
+          low24h: num(d.pl24h),
+          volume24hUsd: num(day?.vu),
+          txs24h: num(day?.txs),
+          cexListed: Array.isArray(d.cexs) ? d.cexs.map((c: { n?: string }) => c?.n).filter((n: unknown): n is string => typeof n === "string") : [],
+        };
       } catch (e) {
         errors.push(`dex ${s.symbol}: ${e instanceof Error ? e.message : "failed"}`);
       }
